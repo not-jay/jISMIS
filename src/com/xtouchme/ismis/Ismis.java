@@ -1,12 +1,15 @@
 package com.xtouchme.ismis;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.xtouchme.http.client.methods.HttpRequest;
+import com.xtouchme.ismis.data.Announcement;
 import com.xtouchme.ismis.data.Student;
 
 public class Ismis {
@@ -18,67 +21,94 @@ public class Ismis {
 	 * the cookies)
 	 */
 	private HttpRequest request = null;
-	
-	/**
-	 * The current user logged in
-	 */
+	/** The current user logged in */
 	private Student currentUser = null;
-	
-	//HTTP request URLs
-	public static final String LOGOUT = "http://ismis.usc.edu.ph/Accounts/Logout/";
-	public static final String HOME = "http://ismis.usc.edu.ph/";
-	public static final String STUDENT_HOME = "http://ismis.usc.edu.ph/Home/Student/";
-	public static final String STUDENT_DETAILS = "http://ismis.usc.edu.ph/Student/StudentDetails/";
-	public static final String OFFERED_SUBJECTS = "http://ismis.usc.edu.ph/SubjectScheduleForStudent/Index/";
-	public static final String UPDATE_YEARLEVEL = "http://ismis.usc.edu.ph/Student/CalculateYearLevel/";
-	public static final String LACKING_SUBJECTS = "http://http://ismis.usc.edu.ph/SubjectsToTake/Index/";
-	
-	//JSON Object request URLs
-	public static final String ANNOUNCEMENTS = "http://ismis.usc.edu.ph/Announcement/_StudentAnnouncements";
+	/** List of announcements currently */
+	private List<Announcement> announcements = null;
+	/** Blocked Status */
+	//private List<BlockList> blockList = null;
+	/** HTTP URLs */
+	public class HTTP {
+		public static final String LOGOUT = "http://ismis.usc.edu.ph/Accounts/Logout/";
+		public static final String HOME = "http://ismis.usc.edu.ph/";
+		public static final String STUDENT_HOME = "http://ismis.usc.edu.ph/Home/Student/";
+		public static final String STUDENT_DETAILS = "http://ismis.usc.edu.ph/Student/StudentDetails/";
+		public static final String OFFERED_SUBJECTS = "http://ismis.usc.edu.ph/SubjectScheduleForStudent/Index/";
+		public static final String UPDATE_YEARLEVEL = "http://ismis.usc.edu.ph/Student/CalculateYearLevel/";
+		public static final String LACKING_SUBJECTS = "http://http://ismis.usc.edu.ph/SubjectsToTake/Index/";
+	}
+	/** JSON Object URLs */
+	public class JSON {
+		public static final String ANNOUNCEMENTS = "http://ismis.usc.edu.ph/Announcement/_StudentAnnouncements";
+		public static final String BLOCK_LIST = "http://ismis.usc.edu.ph/StudentBlocking/_BlockList";
+	}
 	
 	public Ismis(HttpRequest request) {
 		this.request = request;
 	}
 	
-	public void getAnnouncements() {
-		//Can only get announcements when logged in
+	public void checkBlockList() {
+		//Can only check for block status when logged in
 		if(currentUser == null) return;
-		if(isVerbose) System.out.println("-- Announcements --");
 		
-		JSONObject jsonData = requestJSONPost(ANNOUNCEMENTS, "page=1&size=10");
+		if(isVerbose) System.out.println("-- Block List/Status --");
+		
+		JSONObject jsonData = requestJSONPost(JSON.BLOCK_LIST, "studentId="+currentUser.getIsmisID()+"&page=1&size=5");
 		
 		int total = 0;
-		JSONArray announcements = null;
+		if(jsonData != null) total = jsonData.getInt("total");
+		else System.err.printf("Error: Invalid BlockList size, %d", total);
+	}
+	
+	public Announcement[] getAnnouncements() {
+		return announcements.toArray(new Announcement[]{});
+	}
+	
+	public void checkAnnouncements() {
+		//Can only get announcements when logged in
+		if(currentUser == null) return;
+		
+		if(announcements != null) announcements.clear();
+		announcements = new ArrayList<>();
+		
+		if(isVerbose) System.out.println("-- Announcements --");
+		
+		JSONObject jsonData = requestJSONPost(JSON.ANNOUNCEMENTS, "page=1&size=10");
+		
+		int total = 0;
+		if(jsonData != null) total = jsonData.getInt("total");
+		else System.err.printf("Error: Invalid Announcement size, %d", total);
+		
+		JSONArray data = null;
+		jsonData = requestJSONPost(JSON.ANNOUNCEMENTS, "page=1&size="+total);
 		if(jsonData != null) {
-			total = jsonData.getInt("total");
-			announcements = jsonData.getJSONArray("data");
+			data = jsonData.getJSONArray("data");
 		} else {
 			System.err.println("Error: Unable to fetch Announcements");
 		}
 		
-		if(isVerbose) {
-			for(int i = 0; i < announcements.length(); i++) {
-				JSONObject data = announcements.getJSONObject(i);
-				int id = data.getInt("AnnouncementId");
-				String title = data.getString("Title");
-				String dateCreated = data.getString("DateCreated");
-				long dateMillis = Long.parseLong(dateCreated.substring(dateCreated.indexOf('(')+1,
-																	   dateCreated.indexOf(')')));
-				Date date = new Date(dateMillis);
-				SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
-				
-				System.out.printf("  [%d] '%s' (%s)%n", id, title, sdf.format(date));
-			}
-		} else
-			System.out.printf("%d Announcement%s received%n", total, (total != 1)?"s":"");
+		for(int i = 0; i < data.length(); i++) {
+			JSONObject obj = data.getJSONObject(i);
+			int id = obj.getInt("AnnouncementId");
+			String title = obj.getString("Title");
+			String dateCreated = obj.getString("DateCreated");
+			long dateMillis = Long.parseLong(dateCreated.substring(dateCreated.indexOf('(')+1,
+																   dateCreated.indexOf(')')));
+			
+			Announcement a = new Announcement(id, title, dateMillis);
+			announcements.add(a);
+			if(isVerbose) System.out.println("  "+a);
+		}
+		if(!isVerbose) System.out.printf("%d Announcement%s received%n", total, (total != 1)?"s":"");
 	}
 	
 	public void logout() {
 		//Can only log out when logged in :P
 		if(currentUser == null) return;
 		
-		requestGet(LOGOUT);
-		requestGet(HOME);
+		requestGet(HTTP.LOGOUT);
+		requestGet(HTTP.HOME);
+		currentUser = null;
 		
 		System.out.println("Logged out!");
 	}
@@ -87,7 +117,7 @@ public class Ismis {
 		//Can only update when logged in
 		if(currentUser == null) return null;
 		
-		String response = requestPost(UPDATE_YEARLEVEL, "mango=2821");
+		String response = requestPost(HTTP.UPDATE_YEARLEVEL, "mango="+currentUser.getIsmisID());
 		
 		if(!response.isEmpty()) return getStudentDetails();
 		
@@ -98,29 +128,30 @@ public class Ismis {
 		boolean result = loginAccount(username, password);
 		if(!result)	return false; //Login was unsuccessful!
 		
-		//If login was successful, get student info and redirect to /home/student
+		//If login was successful, redirect to /home/student and then get student info
 		result = getStudentDetails() != null;
 		if(!result) return false;
-		
-		result = finalizeLogin() != null;
 		
 		return result;
 	}
 	
-	private String finalizeLogin() {
-		return requestGet(STUDENT_HOME);
-	}
-	
 	private Student getStudentDetails() {
+		String response = requestGet(HTTP.STUDENT_HOME);
+		/** Apparently, the mango value differs per account */
+		Pattern mango = Pattern.compile("\\\"mango\\\": [0-9]*");
+		Matcher matcher = mango.matcher(response);
+		String id = "";
+		if(matcher.find()) id = matcher.group().split(":")[1].trim();
+		
 		/**
 		 * http://api.jquery.com/jQuery.ajax/ - read the part about 'data'
 		 * ctrl+u'd ismis/home/student
 		 * it seems they're doing a GET to /student/studentinformation
-		 * with the data object as "mango"=2821
+		 * with the data object as "mango"=id
 		 * 
-		 * So format the GET request URL to be URL?mango=2821
+		 * So format the GET request URL to be URL?mango=id
 		 */
-		String response = requestGet(STUDENT_DETAILS+"?mango=2821");
+		response = requestGet(HTTP.STUDENT_DETAILS+"?mango="+id);
 		
 		//Split and trim to an array
 		//My reg-ex foo isn't strong enough to combine these to one reg-ex
@@ -151,18 +182,18 @@ public class Ismis {
 		}
 		
 		//Save details
-		currentUser = new Student(data);
+		currentUser = new Student(id, data);
 		if(isVerbose) System.out.println(currentUser);
 		
 		return currentUser;
 	}
 	
 	private boolean loginAccount(String username, String password) {
-		requestGet(HOME);
+		requestGet(HTTP.HOME);
 		
 		String data = String.format("Username=%s&Password=%s", username, password);
 		
-		String response = requestPost(HOME, data);
+		String response = requestPost(HTTP.HOME, data);
 		
 		if(!isVerbose) return response.contains("href=\"/Home/Student\"");
 		

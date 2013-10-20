@@ -2,6 +2,7 @@ package com.xtouchme.ismis.data;
 
 public class Student {
 
+	private String studentID;
 	private String idNumber;
 	private String name;
 	private String prospectus;
@@ -12,7 +13,9 @@ public class Student {
 	 * 
 	 * @param ismisData - '\r\n' separated key:value pair data of the student
 	 */
-	public Student(String ismisData) {
+	public Student(String studentID, String ismisData) {
+		this.studentID = studentID;
+		
 		String data[] = ismisData.split("\r\n");
 		
 		this.idNumber = data[0].split(":")[1];
@@ -25,10 +28,14 @@ public class Student {
 		this.name = "";
 		for(String s : tempName) {
 			s = s.substring(0, 1)+s.substring(1).toLowerCase();
-			this.name += " "+s;
+			this.name += " "+s.trim();
 		}
 		this.name = this.name.substring(1);
 		
+	}
+	
+	public String getIsmisID() {
+		return studentID;
 	}
 	
 	public String getName() {
