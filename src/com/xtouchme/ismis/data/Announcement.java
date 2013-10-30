@@ -10,6 +10,10 @@ public class Announcement {
 	private int id;
 	private String title;
 	private String date;
+	//private String message;
+	//private String sender;
+	//private String recipientDepartment;
+	//private String recipientRole;
 	
 	public Announcement(int id, String title, long date) {
 		this.id = id;
@@ -26,8 +30,7 @@ public class Announcement {
 	
 	@Override
 	public String toString() {
-		
-		return String.format("[%d] '%s' (%s)%n", id, title, date);
+		return String.format("[%d] '%s' (%s)", id, title, date);
 	}
 	
 }
