@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import com.xtouchme.http.client.methods.HttpRequest;
 import com.xtouchme.ismis.data.Announcement;
+import com.xtouchme.ismis.data.BlockStatus;
 import com.xtouchme.ismis.data.Student;
 
 public class Ismis {
@@ -26,7 +27,7 @@ public class Ismis {
 	/** List of announcements currently */
 	private List<Announcement> announcements = null;
 	/** Blocked Status */
-	//private List<BlockList> blockList = null;
+	private List<BlockStatus> blockList = null;
 	/** HTTP URLs */
 	public class HTTP {
 		public static final String LOGOUT = "http://ismis.usc.edu.ph/Accounts/Logout/";
@@ -35,7 +36,7 @@ public class Ismis {
 		public static final String STUDENT_DETAILS = "http://ismis.usc.edu.ph/Student/StudentDetails/";
 		public static final String OFFERED_SUBJECTS = "http://ismis.usc.edu.ph/SubjectScheduleForStudent/Index/";
 		public static final String UPDATE_YEARLEVEL = "http://ismis.usc.edu.ph/Student/CalculateYearLevel/";
-		public static final String LACKING_SUBJECTS = "http://http://ismis.usc.edu.ph/SubjectsToTake/Index/";
+		public static final String LACKING_SUBJECTS = "http://ismis.usc.edu.ph/SubjectsToTake/Index/";
 	}
 	/** JSON Object URLs */
 	public class JSON {
@@ -45,6 +46,10 @@ public class Ismis {
 	
 	public Ismis(HttpRequest request) {
 		this.request = request;
+	}
+	
+	public BlockStatus[] getBlockList() {
+		return blockList.toArray(new BlockStatus[] {});
 	}
 	
 	public void checkBlockList() {
@@ -58,6 +63,39 @@ public class Ismis {
 		int total = 0;
 		if(jsonData != null) total = jsonData.getInt("total");
 		else System.err.printf("Error: Invalid BlockList size, %d", total);
+		
+		if(total == 0 && jsonData != null) {
+			System.out.println("There are no new entries in the BlockList");
+			return;
+		}
+		
+		if(blockList != null) blockList.clear();
+		blockList = new ArrayList<>();
+		
+		JSONArray data = null;
+		jsonData = requestJSONPost(JSON.BLOCK_LIST, "studentId="+currentUser.getIsmisID()+"&page=1&size="+total);
+		if(jsonData != null) {
+			data = jsonData.getJSONArray("data");
+		} else {
+			System.err.println("Error: Unable to fetch BlockList");
+		}
+		
+		for(int i = 0; i < data.length(); i++) {
+			JSONObject obj = data.getJSONObject(i);
+			int studentId = obj.getInt("StudentId");
+			int blockedId = obj.getInt("BlockedStudentId");
+			int deptId = obj.getInt("DepartmentId");
+			String deptName = obj.getString("DepartmentName");
+			String reason = obj.getString("Reason");
+			String status = obj.getString("Status");
+			
+			BlockStatus b = new BlockStatus(studentId, blockedId, deptId, deptName, reason, status);
+			blockList.add(b);
+			if(isVerbose) System.out.println("  "+b);
+		}
+		if(!isVerbose) System.out.printf("Your account is %s, with %d citation%s%n",
+										(blockList.isEmpty())?"okay":"blocked",
+										total, (total != 1)?"s":"");
 	}
 	
 	public Announcement[] getAnnouncements() {
@@ -68,9 +106,6 @@ public class Ismis {
 		//Can only get announcements when logged in
 		if(currentUser == null) return;
 		
-		if(announcements != null) announcements.clear();
-		announcements = new ArrayList<>();
-		
 		if(isVerbose) System.out.println("-- Announcements --");
 		
 		JSONObject jsonData = requestJSONPost(JSON.ANNOUNCEMENTS, "page=1&size=10");
@@ -78,6 +113,14 @@ public class Ismis {
 		int total = 0;
 		if(jsonData != null) total = jsonData.getInt("total");
 		else System.err.printf("Error: Invalid Announcement size, %d", total);
+		
+		if(total == 0 && jsonData != null) {
+			System.out.println("There are no new Announcements");
+			return;
+		}
+		
+		if(announcements != null) announcements.clear();
+		announcements = new ArrayList<>();
 		
 		JSONArray data = null;
 		jsonData = requestJSONPost(JSON.ANNOUNCEMENTS, "page=1&size="+total);
@@ -118,6 +161,7 @@ public class Ismis {
 		if(currentUser == null) return null;
 		
 		String response = requestPost(HTTP.UPDATE_YEARLEVEL, "mango="+currentUser.getIsmisID());
+		System.out.println(response);
 		
 		if(!response.isEmpty()) return getStudentDetails();
 		
