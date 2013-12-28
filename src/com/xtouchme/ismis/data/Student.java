@@ -29,7 +29,7 @@ public class Student {
 		} else
 			prospectus = "";
 		
-		//Properly capitalize the name, ALL CAPS is for cruise control lol
+		//Properly capitalize the name, ALL CAPS is cruise control for cool lol
 		String tempName[] = this.name.replaceAll("^ +| +$|( )+", "$1").split(" "); //Pheex double spaces
 		this.name = "";
 		for(String s : tempName) {
@@ -44,24 +44,28 @@ public class Student {
 		return studentID;
 	}
 	
+	public String getIDNumber() {
+		return idNumber;
+	}
+	
 	public String getName() {
 		return name;
 	}
 	
-	@Override
-	public String toString() {
+	public String getYearLevelString() {
 		String year = "";
+		
 		switch(yearLevel) {
 		case 1:
-			year = "1st";
+			year = "1st"; break;
 		case 2:
-			year = "2nd";
+			year = "2nd"; break;
 		case 3:
-			year = "3rd";
+			year = "3rd"; break;
 		case 4:
-			year = "4th";
+			year = "4th"; break;
 		case 5:
-			year = "5th";
+			year = "5th"; break;
 		default:
 			year = String.format("%dth", yearLevel);
 		}
@@ -69,7 +73,20 @@ public class Student {
 		
 		if(yearLevel == 0) year = "";
 		
-		return String.format("[%s] %s%n%s %s", idNumber, name, prospectus, year);
+		return year;
+	}
+	
+	public int getYearLevel() {
+		return yearLevel;
+	}
+	
+	public String getProspectus() {
+		return prospectus;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("[%s] %s%n%s %s", idNumber, name, prospectus, getYearLevelString());
 	}
 	
 }

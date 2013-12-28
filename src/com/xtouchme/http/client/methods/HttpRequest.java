@@ -20,7 +20,6 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
 
 public class HttpRequest {
 	
@@ -52,7 +51,7 @@ public class HttpRequest {
                 httpPost.abort();
             }
         } catch (Exception e) {
-            System.out.println("Your App Name Here" + e);
+//            System.out.println("Your App Name Here" + e);
         }
     }
 

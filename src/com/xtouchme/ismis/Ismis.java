@@ -36,7 +36,13 @@ public class Ismis {
 		public static final String STUDENT_DETAILS = "http://ismis.usc.edu.ph/Student/StudentDetails/";
 		public static final String OFFERED_SUBJECTS = "http://ismis.usc.edu.ph/SubjectScheduleForStudent/Index/";
 		public static final String UPDATE_YEARLEVEL = "http://ismis.usc.edu.ph/Student/CalculateYearLevel/";
-		public static final String LACKING_SUBJECTS = "http://ismis.usc.edu.ph/SubjectsToTake/Index/";
+		public static final String LACKING_SUBJECTS = "http://ismis.usc.edu.ph/SubjectsToTake/Index/"; //TODO
+		/** 
+		 * For schedule, issue a GET with docId = 1
+		 * For exam permit, issue a GET with docId = 2
+		 **/
+		public static final String SCHEDULE = "http://ismis.usc.edu.ph/Student/EnrolledSubject/"; //TODO
+		public static final String VIEW_GRADES = "http://ismis.usc.edu.ph/Grades/ViewGrades/"; //TODO
 	}
 	/** JSON Object URLs */
 	public class JSON {
