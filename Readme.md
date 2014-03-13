@@ -1,4 +1,4 @@
-jISMIS - A Java wrapper/library for ISMIS
+jISMIS
 =========================================
 
-...
+A Java wrapper/library for ISMIS
