@@ -15,7 +15,8 @@ import com.xtouchme.ismis.data.Student;
 
 public class Ismis {
 	
-	public boolean isVerbose = false;
+	public boolean isVerbose	= false;
+	public boolean noResponses	= true;
 	/**
 	 * Since ISMIS stores cookies we need, this needs to be persistent
 	 * (or more specifically its HttpClient since it's the one storing
@@ -267,7 +268,7 @@ public class Ismis {
 		if(isVerbose) System.out.println("** Expecting JSON Object response");
 		String response = request.sendJSONPost(url, data);
 		if(response == null) response = "";
-		else if(isVerbose) System.out.println(response);
+		else if(!noResponses) System.out.println(response);
 		
 		JSONObject json = new JSONObject(response);
 		
@@ -278,7 +279,7 @@ public class Ismis {
 		if(isVerbose) System.out.println("Requesting POST to "+url);
 		String response = request.sendPost(url, data);
 		if(response == null) response = "";
-		else if(isVerbose) System.out.println(response);
+		else if(!noResponses) System.out.println(response);
 		
 		return response;
 	}
@@ -286,7 +287,7 @@ public class Ismis {
 	private String requestGet(String url) {
 		if(isVerbose) System.out.println("Requesting GET to "+url);
 		String response = request.sendGet(url);
-		if(isVerbose) System.out.println("Response: "+response);
+		if(!noResponses) System.out.println("Response: "+response);
 		
 		return response;
 	}
