@@ -233,6 +233,7 @@ public class Ismis {
 		}
 		
 		//Save details
+		System.out.print("Data: "+data);
 		currentUser = new Student(id, data);
 		if(isVerbose) System.out.println(currentUser);
 		
