@@ -55,6 +55,16 @@ public class Ismis {
 		this.request = request;
 	}
 	
+	public JSONArray getGrades() { //TODO
+		if(currentUser == null) return null;
+		
+		if(isVerbose) System.out.println("-- Grades --");
+		
+		JSONArray grades = new JSONArray();
+		
+		return grades;
+	}
+	
 	public BlockStatus[] getBlockList() {
 		return blockList.toArray(new BlockStatus[] {});
 	}
