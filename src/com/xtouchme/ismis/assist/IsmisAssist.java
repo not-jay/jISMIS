@@ -13,9 +13,11 @@ public class IsmisAssist {
 		
 		if(result) {
 			System.out.println("Welcome! "+ismis.getStudent().getName());
+			ismis.betaGetStudentDetails();
 			ismis.updateYearLevel();
 			ismis.checkAnnouncements();
 			ismis.checkBlockList();
+			ismis.getGrades();
 			ismis.logout();
 		}
 	}

@@ -5,9 +5,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.json.HTTPTokener;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import com.xtouchme.http.client.methods.HttpRequest;
 import com.xtouchme.ismis.data.Announcement;
@@ -71,9 +72,10 @@ public class Ismis {
 		
 		JSONArray grades = new JSONArray();
 		
-		String gradePage = requestGet(HTTP.VIEW_GRADES);
-		HTTPTokener tokener = new HTTPTokener(gradePage);
-		System.out.println("test");
+		String gradePage = requestGet(HTTP.VIEW_GRADES).trim();
+		gradePage = gradePage.substring(gradePage.indexOf("<div id=\"areaToPrint\">"));
+		
+		
 	}
 	
 	public BlockStatus[] getBlockList() {
@@ -205,6 +207,13 @@ public class Ismis {
 		if(!result) return false;
 		
 		return result;
+	}
+	
+	public Student betaGetStudentDetails() {
+		Document doc = Jsoup.parse(requestGet(HTTP.STUDENT_HOME), HTTP.STUDENT_HOME);
+		System.out.println(doc.outerHtml());
+		
+		return null;
 	}
 	
 	private Student getStudentDetails() {
