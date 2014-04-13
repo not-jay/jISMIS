@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.json.HTTPTokener;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -15,8 +16,14 @@ import com.xtouchme.ismis.data.Student;
 
 public class Ismis {
 	
-	public boolean isVerbose	= false;
-	public boolean noResponses	= true;
+	//TODO:		Split this to two classes
+	//TODO:		Ismis			- only handle connections and http requests, don't store data
+	//TODO:		IsmisSession	- stores cookies and data, used by ismis to determine current user, doesn't connect to ismis
+	//TODO:		Don't print anything
+	
+	public boolean isVerbose	= false;	//Verbose printing
+	public boolean noResponses	= true;		//Disables http response printing
+	public boolean online		= true;		//
 	/**
 	 * Since ISMIS stores cookies we need, this needs to be persistent
 	 * (or more specifically its HttpClient since it's the one storing
@@ -29,6 +36,8 @@ public class Ismis {
 	private List<Announcement> announcements = null;
 	/** Blocked Status */
 	private List<BlockStatus> blockList = null;
+	/** Current student grades */
+	
 	/** HTTP URLs */
 	public class HTTP {
 		public static final String LOGOUT = "http://ismis.usc.edu.ph/Accounts/Logout/";
@@ -55,14 +64,16 @@ public class Ismis {
 		this.request = request;
 	}
 	
-	public JSONArray getGrades() { //TODO
-		if(currentUser == null) return null;
+	public void getGrades() { //TODO
+		if(currentUser == null) return;
 		
 		if(isVerbose) System.out.println("-- Grades --");
 		
 		JSONArray grades = new JSONArray();
 		
-		return grades;
+		String gradePage = requestGet(HTTP.VIEW_GRADES);
+		HTTPTokener tokener = new HTTPTokener(gradePage);
+		System.out.println("test");
 	}
 	
 	public BlockStatus[] getBlockList() {
@@ -243,7 +254,7 @@ public class Ismis {
 		}
 		
 		//Save details
-		System.out.print("Data: "+data);
+		System.out.println("Data: "+data);
 		currentUser = new Student(id, data);
 		if(isVerbose) System.out.println(currentUser);
 		
