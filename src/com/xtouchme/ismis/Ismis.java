@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import com.xtouchme.http.client.methods.HttpRequest;
 import com.xtouchme.ismis.data.Announcement;
@@ -210,8 +211,16 @@ public class Ismis {
 	}
 	
 	public Student betaGetStudentDetails() {
-		Document doc = Jsoup.parse(requestGet(HTTP.STUDENT_HOME), HTTP.STUDENT_HOME);
-		System.out.println(doc.outerHtml());
+		String response = requestGet(HTTP.STUDENT_HOME);
+		/** Apparently, the mango value differs per account */
+		Pattern mango = Pattern.compile("\\\"mango\\\": [0-9]*");
+		Matcher matcher = mango.matcher(response);
+		String id = "";
+		if(matcher.find()) id = matcher.group().split(":")[1].trim();
+		
+		Document doc = Jsoup.parse(response, HTTP.STUDENT_HOME);
+		Element studDetails = doc.getElementById("studDetails");
+		System.out.println(studDetails.outerHtml());
 		
 		return null;
 	}
