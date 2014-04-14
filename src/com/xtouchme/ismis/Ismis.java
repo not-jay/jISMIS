@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import com.xtouchme.http.client.methods.HttpRequest;
 import com.xtouchme.ismis.data.Announcement;
@@ -220,7 +221,10 @@ public class Ismis {
 		
 		Document doc = Jsoup.parse(response, HTTP.STUDENT_HOME);
 		Element studDetails = doc.getElementById("studDetails");
-		System.out.println(studDetails.outerHtml());
+		Elements tr = studDetails.getElementsByTag("tr");
+		for(Element e : tr) {
+			System.out.println(e);
+		}
 		
 		return null;
 	}
