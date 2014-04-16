@@ -3,7 +3,12 @@ package com.xtouchme.ismis.data;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import com.xtouchme.http.client.methods.HttpRequest;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+import com.xtouchme.ismis.Ismis;
+import com.xtouchme.ismis.IsmisSession;
 
 public class Announcement {
 
@@ -24,8 +29,26 @@ public class Announcement {
 		this.date = sdf.format(d);
 	}
 	
-	public String displayDetails(HttpRequest request) {
-		return request.sendGet("http://ismis.usc.edu.ph/Announcement/DisplayAnnouncement?announcementID="+id);
+	public String getDate() {
+		return date;
+	}
+	
+	/**
+	 * Get an announcement's details
+	 * @param session Session used to retrieve the details
+	 * @return a {@link JSONObject} that contains the "subject" and "body" of the announcement
+	 */
+	public JSONObject getDetails(IsmisSession session) {
+		Document doc = Jsoup.parse(Ismis.Page.requestGet(session, Ismis.HTTP.ANNOUNCEMENT_DETAILS+"?announcementID="+id),
+														 Ismis.HTTP.ANNOUNCEMENT_DETAILS+"?announcementID="+id);
+		String subject = doc.getElementById("announcesub").getElementsByTag("h1").get(0).ownText();
+		String body = doc.getElementById("announcebody").getElementsByTag("fieldset").get(0).text().replace("Message:", "");
+		
+		JSONObject details = new JSONObject();
+		details.put("subject", subject);
+		details.put("body", body);
+		
+		return details;
 	}
 	
 	@Override

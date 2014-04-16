@@ -12,35 +12,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import com.xtouchme.http.client.methods.HttpRequest;
 import com.xtouchme.ismis.data.Announcement;
 import com.xtouchme.ismis.data.BlockStatus;
 import com.xtouchme.ismis.data.Student;
+import com.xtouchme.utils.Lists;
 
 public class Ismis {
-	
-	//TODO:		Split this to two classes
-	//TODO:		Ismis			- only handle connections and http requests, don't store data
-	//TODO:		IsmisSession	- stores cookies and data, used by ismis to determine current user, doesn't connect to ismis
-	//TODO:		Don't print anything
-	
-	public boolean isVerbose	= false;	//Verbose printing
-	public boolean noResponses	= true;		//Disables http response printing
-	public boolean online		= true;		//
-	/**
-	 * Since ISMIS stores cookies we need, this needs to be persistent
-	 * (or more specifically its HttpClient since it's the one storing
-	 * the cookies)
-	 */
-	private HttpRequest request = null;
-	/** The current user logged in */
-	private Student currentUser = null;
-	/** List of announcements currently */
-	private List<Announcement> announcements = null;
-	/** Blocked Status */
-	private List<BlockStatus> blockList = null;
-	/** Current student grades */
-	
 	/** HTTP URLs */
 	public class HTTP {
 		public static final String LOGOUT = "http://ismis.usc.edu.ph/Accounts/Logout/";
@@ -56,61 +33,64 @@ public class Ismis {
 		 **/
 		public static final String SCHEDULE = "http://ismis.usc.edu.ph/Student/EnrolledSubject/"; //TODO
 		public static final String VIEW_GRADES = "http://ismis.usc.edu.ph/Grades/ViewGrades/"; //TODO
+		
+		public static final String ANNOUNCEMENT_DETAILS = "http://ismis.usc.edu.ph/Announcement/DisplayAnnouncement";
 	}
 	/** JSON Object URLs */
 	public class JSON {
 		public static final String ANNOUNCEMENTS = "http://ismis.usc.edu.ph/Announcement/_StudentAnnouncements";
 		public static final String BLOCK_LIST = "http://ismis.usc.edu.ph/StudentBlocking/_BlockList";
 	}
-	
-	public Ismis(HttpRequest request) {
-		this.request = request;
+	/** Utility methods */
+	public static class Page {
+		public static JSONObject requestJSONPost(IsmisSession is, String url, String data) {
+//			if(isVerbose) System.out.println("Requesting POST to "+url);
+//			if(isVerbose) System.out.println("** Expecting JSON Object response");
+			String response = is.sendJSONPost(url, data);
+			if(response == null) response = "";
+//			else if(!noResponses) System.out.println(response);
+			
+			JSONObject json = new JSONObject(response);
+			
+			return json;
+		}
+		public static String requestPost(IsmisSession is, String url, String data) {
+//			if(isVerbose) System.out.println("Requesting POST to "+url);
+			String response = is.sendPost(url, data);
+			if(response == null) response = "";
+//			else if(!noResponses) System.out.println(response);
+			
+			return response;
+		}
+		public static String requestGet(IsmisSession is, String url) {
+//			if(isVerbose) System.out.println("Requesting GET to "+url);
+			String response = is.sendGet(url);
+//			if(!noResponses) System.out.println("Response: "+response);
+			
+			return response;
+		}
 	}
 	
-	public void getGrades() { //TODO
-		if(currentUser == null) return;
+	/**
+	 * Checks ISMIS for new block list status, silently fails if it encounters any errors
+	 * @param session Session to use to check for blocklist
+	 */
+	public static void checkBlockList(IsmisSession session) {
+		if(!session.isLoggedIn()) return;
 		
-		if(isVerbose) System.out.println("-- Grades --");
-		
-		JSONArray grades = new JSONArray();
-		
-		String gradePage = requestGet(HTTP.VIEW_GRADES).trim();
-		gradePage = gradePage.substring(gradePage.indexOf("<div id=\"areaToPrint\">"));
-		
-		
-	}
-	
-	public BlockStatus[] getBlockList() {
-		return blockList.toArray(new BlockStatus[] {});
-	}
-	
-	public void checkBlockList() {
-		//Can only check for block status when logged in
-		if(currentUser == null) return;
-		
-		if(isVerbose) System.out.println("-- Block List/Status --");
-		
-		JSONObject jsonData = requestJSONPost(JSON.BLOCK_LIST, "studentId="+currentUser.getIsmisID()+"&page=1&size=5");
+		JSONObject json = Page.requestJSONPost(session, JSON.BLOCK_LIST, "studentId="+session.getUser().getInternalId()+"&page=1&size=5");
 		
 		int total = 0;
-		if(jsonData != null) total = jsonData.getInt("total");
-		else System.err.printf("Error: Invalid BlockList size, %d", total);
+		if(json != null) total = json.getInt("total");
+		else return;
+		if(total == 0 && json != null) return;
 		
-		if(total == 0 && jsonData != null) {
-			System.out.println("There are no new entries in the BlockList");
-			return;
-		}
-		
-		if(blockList != null) blockList.clear();
-		blockList = new ArrayList<>();
-		
+		List<BlockStatus> fetched = new ArrayList<>();
 		JSONArray data = null;
-		jsonData = requestJSONPost(JSON.BLOCK_LIST, "studentId="+currentUser.getIsmisID()+"&page=1&size="+total);
-		if(jsonData != null) {
-			data = jsonData.getJSONArray("data");
-		} else {
-			System.err.println("Error: Unable to fetch BlockList");
-		}
+		
+		json = Page.requestJSONPost(session, JSON.BLOCK_LIST, "studentId="+session.getUser().getInternalId()+"&page=1&size="+total);
+		if(json != null) data = json.getJSONArray("data");
+		else return;
 		
 		for(int i = 0; i < data.length(); i++) {
 			JSONObject obj = data.getJSONObject(i);
@@ -122,45 +102,33 @@ public class Ismis {
 			String status = obj.getString("Status");
 			
 			BlockStatus b = new BlockStatus(studentId, blockedId, deptId, deptName, reason, status);
-			blockList.add(b);
-			if(isVerbose) System.out.println("  "+b);
+			fetched.add(b);
 		}
-		if(!isVerbose) System.out.printf("Your account is %s, with %d citation%s%n",
-										(blockList.isEmpty())?"okay":"blocked",
-										total, (total != 1)?"s":"");
+		
+		List<BlockStatus> newBlockList = Lists.arraylistDiff(fetched, session.blockList());
+		if(newBlockList != null) session.addBlockStatus(newBlockList);
 	}
 	
-	public Announcement[] getAnnouncements() {
-		return announcements.toArray(new Announcement[]{});
-	}
-	
-	public void checkAnnouncements() {
-		//Can only get announcements when logged in
-		if(currentUser == null) return;
+	/**
+	 * Checks ISMIS for new announcements, silently fails if it encounters any errors
+	 * @param session Session to use to check for updates
+	 */
+	public static void checkAnnouncements(IsmisSession session) {
+		if(!session.isLoggedIn()) return;
 		
-		if(isVerbose) System.out.println("-- Announcements --");
-		
-		JSONObject jsonData = requestJSONPost(JSON.ANNOUNCEMENTS, "page=1&size=10");
+		JSONObject json = Page.requestJSONPost(session, JSON.ANNOUNCEMENTS, "page=1&size=10");
 		
 		int total = 0;
-		if(jsonData != null) total = jsonData.getInt("total");
-		else System.err.printf("Error: Invalid Announcement size, %d", total);
+		if(json != null) total = json.getInt("total");
+		else return;
+		if(total == 0 && json != null) return;
 		
-		if(total == 0 && jsonData != null) {
-			System.out.println("There are no new Announcements");
-			return;
-		}
-		
-		if(announcements != null) announcements.clear();
-		announcements = new ArrayList<>();
-		
+		List<Announcement> fetched = new ArrayList<>();
 		JSONArray data = null;
-		jsonData = requestJSONPost(JSON.ANNOUNCEMENTS, "page=1&size="+total);
-		if(jsonData != null) {
-			data = jsonData.getJSONArray("data");
-		} else {
-			System.err.println("Error: Unable to fetch Announcements");
-		}
+		
+		json = Page.requestJSONPost(session, JSON.ANNOUNCEMENTS, "page=1&size="+total);
+		if(json != null) data = json.getJSONArray("data");
+		else return;
 		
 		for(int i = 0; i < data.length(); i++) {
 			JSONObject obj = data.getJSONObject(i);
@@ -171,169 +139,103 @@ public class Ismis {
 																   dateCreated.indexOf(')')));
 			
 			Announcement a = new Announcement(id, title, dateMillis);
-			announcements.add(a);
-			if(isVerbose) System.out.println("  "+a);
+			fetched.add(a);
 		}
-		if(!isVerbose) System.out.printf("%d Announcement%s received%n", total, (total != 1)?"s":"");
+		
+		List<Announcement> newAnnouncements = Lists.arraylistDiff(fetched, session.announcements());
+		if(newAnnouncements != null) session.addAnnouncements(newAnnouncements);
 	}
 	
-	public void logout() {
-		//Can only log out when logged in :P
-		if(currentUser == null) return;
+	/**
+	 * Attempts to update the user's year level. Updates the student object if there are updates
+	 * @param session Session to update
+	 * @return true if year level was updated, false otherwise
+	 */
+	public static boolean updateYearLevel(IsmisSession session) {
+		if(!session.isLoggedIn()) return false;
 		
-		requestGet(HTTP.LOGOUT);
-		requestGet(HTTP.HOME);
-		currentUser = null;
+		String response = Page.requestPost(session, HTTP.UPDATE_YEARLEVEL, "mango="+session.getUser().getInternalId());
+		if(response.equalsIgnoreCase("\"No changes were made to the year level.\"")) return false;
 		
-		System.out.println("Logged out!");
+		session.setUser(getStudentDetails(session));
+		return true;
 	}
 	
-	public Student updateYearLevel() {
-		//Can only update when logged in
-		if(currentUser == null) return null;
+	/**
+	 * Logs a session out
+	 * @param session Session to logout
+	 */
+	public static void logout(IsmisSession session) {
+		if(!session.isLoggedIn()) return;
 		
-		String response = requestPost(HTTP.UPDATE_YEARLEVEL, "mango="+currentUser.getIsmisID());
-		System.out.println(response);
-		
-		if(!response.isEmpty()) return getStudentDetails();
-		
-		return null;
+		Page.requestGet(session, HTTP.LOGOUT);
+		Page.requestGet(session, HTTP.HOME);
+		session.logout();
 	}
 	
-	public boolean login(String username, String password) {
-		boolean result = loginAccount(username, password);
-		if(!result)	return false; //Login was unsuccessful!
+	/**
+	 * Attempts to log-in to ISMIS
+	 * @param username
+	 * @param password
+	 * @return an IsmisSession object for a successful login, null otherwise.
+	 */
+	public static IsmisSession login(String username, String password) {
+		IsmisSession session = new IsmisSession();
+		boolean result = loginAccount(session, username, password);
+		if(!result) return null;
 		
-		//If login was successful, redirect to /home/student and then get student info
-		result = getStudentDetails() != null;
-		if(!result) return false;
+		Student user = getStudentDetails(session);
+		if(user == null) return null;
+		session.setUser(user);
 		
-		return result;
+		return session;
 	}
 	
-	public Student betaGetStudentDetails() {
-		String response = requestGet(HTTP.STUDENT_HOME);
-		/** Apparently, the mango value differs per account */
+	/**
+	 * Fetches the current user's details
+	 * @param session Current user's session
+	 * @return a student object for the current user
+	 */
+	private static Student getStudentDetails(IsmisSession session) {
+		String response = Page.requestGet(session, HTTP.STUDENT_HOME);
 		Pattern mango = Pattern.compile("\\\"mango\\\": [0-9]*");
 		Matcher matcher = mango.matcher(response);
 		String id = "";
 		if(matcher.find()) id = matcher.group().split(":")[1].trim();
+		if(id.isEmpty()) return null;
 		
-		Document doc = Jsoup.parse(response, HTTP.STUDENT_HOME);
-		Element studDetails = doc.getElementById("studDetails");
-		Elements tr = studDetails.getElementsByTag("tr");
-		for(Element e : tr) {
-			System.out.println(e);
-		}
+		Document doc = Jsoup.parse(Page.requestGet(session, HTTP.STUDENT_DETAILS+"?mango="+id), HTTP.STUDENT_DETAILS);
+		JSONObject studentDetails = new JSONObject();
+		studentDetails.put("Internal Id", id);
 		
-		return null;
-	}
-	
-	private Student getStudentDetails() {
-		String response = requestGet(HTTP.STUDENT_HOME);
-		/** Apparently, the mango value differs per account */
-		Pattern mango = Pattern.compile("\\\"mango\\\": [0-9]*");
-		Matcher matcher = mango.matcher(response);
-		String id = "";
-		if(matcher.find()) id = matcher.group().split(":")[1].trim();
-		
-		/**
-		 * http://api.jquery.com/jQuery.ajax/ - read the part about 'data'
-		 * ctrl+u'd ismis/home/student
-		 * it seems they're doing a GET to /student/studentinformation
-		 * with the data object as "mango"=id
-		 * 
-		 * So format the GET request URL to be URL?mango=id
-		 */
-		response = requestGet(HTTP.STUDENT_DETAILS+"?mango="+id);
-		
-		//Split and trim to an array
-		//My reg-ex foo isn't strong enough to combine these to one reg-ex
-		//I know you can, but, "</?[table|tr|td]>", doesn't work for me
-		response = response.replaceAll("</?table>", "").trim(); //remove <table></table>
-		response = response.replaceAll("</?tr>", ""); //remove <tr></tr>
-		response = response.replaceAll("</?td>", ""); //remove <td></td>
-		response = response.replaceAll("    ", "");
-		
-		String temp[] = response.split("[\r\n|\r|\n]"); //Split by cr+lf/cr/lf
-		
-		//Clean array by removing empty elements, and reformatting the data to
-		//Key:Value,[Key:Value]
-		String data = "";
-		boolean isPaired = false; //pair flag for formatting
-		for(int x = 0, y = 0; x < temp.length; x++) {
-			if(temp[x].isEmpty()) continue;
-			if(isPaired) {
-				data += "\r\n"+temp[x];
-				isPaired = false;
-			}
-			else {
-				if(y%2 == 0 && y != 0) isPaired = true;
-				data += temp[x];
-				y++;
-			}
+		for(Element e : doc.getElementsByTag("tr")) {
+			Elements td = e.getElementsByTag("td");
+			String key = td.get(0).html();
+			String value = td.get(2).html();
 			
+			studentDetails.put(key, value);
 		}
 		
-		//Save details
-		System.out.println("Data: "+data);
-		currentUser = new Student(id, data);
-		if(isVerbose) System.out.println(currentUser);
+		Student user = new Student(studentDetails);
 		
-		return currentUser;
+		return user;
 	}
 	
-	private boolean loginAccount(String username, String password) {
-		requestGet(HTTP.HOME);
-		
+	/**
+	 * Logs a session in
+	 * @param session Session to log-in
+	 * @param username Student ID Number
+	 * @param password Password
+	 * @return true if log-in was successful
+	 * 		   otherwise, credentials are invalid or an error occurred
+	 */
+	private static boolean loginAccount(IsmisSession session, String username, String password) {
+		Page.requestGet(session, HTTP.HOME);
 		String data = String.format("Username=%s&Password=%s", username, password);
 		
-		String response = requestPost(HTTP.HOME, data);
+		Document doc = Jsoup.parse(Page.requestPost(session, HTTP.HOME, data), HTTP.HOME);
+		Element redirect = doc.getElementsByTag("a").get(0);
 		
-		if(!isVerbose) return response.contains("href=\"/Home/Student\"");
-		
-		if(response.contains("href=\"/Home/Student\"")) {
-			System.out.println("Login complete! Redirecting to /Home/Student/");
-			return true;
-		}
-		else if(response.contains("href=\"/\"")) System.out.println("Credentials invalid!");
-		else System.out.println("Unhandled response! Assuming log-in failed /!\\");
-		
-		//If we got this far, this means it entered one of the elses
-		return false;
+		return HTTP.STUDENT_HOME.endsWith(redirect.attr("href")+"/");
 	}
-	
-	public Student getStudent() {
-		return currentUser;
-	}
-	
-	private JSONObject requestJSONPost(String url, String data) {
-		if(isVerbose) System.out.println("Requesting POST to "+url);
-		if(isVerbose) System.out.println("** Expecting JSON Object response");
-		String response = request.sendJSONPost(url, data);
-		if(response == null) response = "";
-		else if(!noResponses) System.out.println(response);
-		
-		JSONObject json = new JSONObject(response);
-		
-		return json;
-	}
-	
-	private String requestPost(String url, String data) {
-		if(isVerbose) System.out.println("Requesting POST to "+url);
-		String response = request.sendPost(url, data);
-		if(response == null) response = "";
-		else if(!noResponses) System.out.println(response);
-		
-		return response;
-	}
-	
-	private String requestGet(String url) {
-		if(isVerbose) System.out.println("Requesting GET to "+url);
-		String response = request.sendGet(url);
-		if(!noResponses) System.out.println("Response: "+response);
-		
-		return response;
-	}
-	
 }
