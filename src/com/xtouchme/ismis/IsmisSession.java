@@ -68,7 +68,7 @@ public class IsmisSession {
 		this.currentUser = user;
 	}
 	
-	public Student getUser() {
+	public Student user() {
 		return currentUser;
 	}
 	

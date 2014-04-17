@@ -78,7 +78,7 @@ public class Ismis {
 	public static void checkBlockList(IsmisSession session) {
 		if(!session.isLoggedIn()) return;
 		
-		JSONObject json = Page.requestJSONPost(session, JSON.BLOCK_LIST, "studentId="+session.getUser().getInternalId()+"&page=1&size=5");
+		JSONObject json = Page.requestJSONPost(session, JSON.BLOCK_LIST, "studentId="+session.user().internalId()+"&page=1&size=5");
 		
 		int total = 0;
 		if(json != null) total = json.getInt("total");
@@ -88,7 +88,7 @@ public class Ismis {
 		List<BlockStatus> fetched = new ArrayList<>();
 		JSONArray data = null;
 		
-		json = Page.requestJSONPost(session, JSON.BLOCK_LIST, "studentId="+session.getUser().getInternalId()+"&page=1&size="+total);
+		json = Page.requestJSONPost(session, JSON.BLOCK_LIST, "studentId="+session.user().internalId()+"&page=1&size="+total);
 		if(json != null) data = json.getJSONArray("data");
 		else return;
 		
@@ -154,7 +154,7 @@ public class Ismis {
 	public static boolean updateYearLevel(IsmisSession session) {
 		if(!session.isLoggedIn()) return false;
 		
-		String response = Page.requestPost(session, HTTP.UPDATE_YEARLEVEL, "mango="+session.getUser().getInternalId());
+		String response = Page.requestPost(session, HTTP.UPDATE_YEARLEVEL, "mango="+session.user().internalId());
 		if(response.equalsIgnoreCase("\"No changes were made to the year level.\"")) return false;
 		
 		session.setUser(getStudentDetails(session));

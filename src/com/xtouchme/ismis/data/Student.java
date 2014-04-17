@@ -1,16 +1,25 @@
 package com.xtouchme.ismis.data;
 
+import java.util.Hashtable;
+import java.util.Map;
+
 import org.apache.commons.lang3.text.WordUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Student {
 
-	private String internalId;
-	private String idNumber;
-	private String name;
-	private String prospectus;
-	private int yearLevel;
+	//Student details
+	private String					internalId;
+	private String					idNumber;
+	private String					name;
+	private String					prospectus;
+	private int						yearLevel;
+	private String					courseDetails;
+	
+	//Grades
+	private Map<String, Semester>	semesters;
+	private float					generalWeightedAverage;
 	
 	/**
 	 * Creates a student object using the details from a JSONobject
@@ -18,6 +27,9 @@ public class Student {
 	 * @throws JSONException if data is missing a key
 	 */
 	public Student(JSONObject data) {
+		semesters = null;
+		generalWeightedAverage = 0;
+		
 		try {
 			this.internalId	= data.getString("Internal Id");
 			this.idNumber	= data.getString("Student Id");
@@ -29,19 +41,40 @@ public class Student {
 		}
 	}
 
-	public String getInternalId() {
+	public void setCourseDetails(String courseDetails) {
+		this.courseDetails = courseDetails;
+	}
+	
+	public String courseDetails() {
+		return courseDetails;
+	}
+	
+	public Semester getSemester(String identifier) {
+		if(semesters == null) semesters = new Hashtable<>();
+		return semesters.get(identifier);
+	}
+	
+	public void setGWA(float gwa) {
+		this.generalWeightedAverage = gwa;
+	}
+	
+	public float gwa() {
+		return generalWeightedAverage;
+	}
+	
+	public String internalId() {
 		return internalId;
 	}
 	
-	public String getIdNumber() {
+	public String idNumber() {
 		return idNumber;
 	}
 	
-	public String getName() {
+	public String name() {
 		return name;
 	}
 	
-	public String getYearLevelString() {
+	public String yearLevelString() {
 		String year = "";
 		
 		switch(yearLevel) {
@@ -59,17 +92,17 @@ public class Student {
 		return year;
 	}
 	
-	public int getYearLevel() {
+	public int yearLevel() {
 		return yearLevel;
 	}
 	
-	public String getProspectus() {
+	public String prospectus() {
 		return prospectus;
 	}
 	
 	@Override
 	public String toString() {
-		return String.format("[%s] %s %s %s", idNumber, name, prospectus, getYearLevelString());
+		return String.format("[%s] %s %s %s", idNumber, name, prospectus, yearLevelString());
 	}
 	
 }
