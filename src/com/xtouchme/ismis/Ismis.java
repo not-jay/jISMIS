@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -23,6 +24,7 @@ public class Ismis {
 		public static final String LOGOUT = "http://ismis.usc.edu.ph/Accounts/Logout/";
 		public static final String HOME = "http://ismis.usc.edu.ph/";
 		public static final String STUDENT_HOME = "http://ismis.usc.edu.ph/Home/Student/";
+		public static final String CHANGE_PASSWORD = "http://ismis.usc.edu.ph/Accounts/ChangePassword/";
 		public static final String STUDENT_DETAILS = "http://ismis.usc.edu.ph/Student/StudentDetails/";
 		public static final String OFFERED_SUBJECTS = "http://ismis.usc.edu.ph/SubjectScheduleForStudent/Index/";
 		public static final String UPDATE_YEARLEVEL = "http://ismis.usc.edu.ph/Student/CalculateYearLevel/";
@@ -162,6 +164,24 @@ public class Ismis {
 	}
 	
 	/**
+	 * Changes the current user's password
+	 * @param session User's session
+	 * @param oldPassword
+	 * @param newPassword
+	 * @param confirmPassword
+	 * @return true if password change was successful, false otherwise
+	 */
+	public static boolean changePassword(IsmisSession session, String oldPassword, String newPassword, String confirmPassword) {
+		if(!session.isLoggedIn()) return false;
+		
+		Document doc = Jsoup.parse(Page.requestPost(session, HTTP.CHANGE_PASSWORD,
+								   "oldPw="+oldPassword+"&newPw="+newPassword+"&confirmPw="+confirmPassword),
+								   HTTP.CHANGE_PASSWORD);
+		
+		return doc.getElementsByClass("messageContainerSuccess").size() != 0;
+	}
+	
+	/**
 	 * Logs a session out
 	 * @param session Session to logout
 	 */
@@ -187,8 +207,23 @@ public class Ismis {
 		Student user = getStudentDetails(session);
 		if(user == null) return null;
 		session.setUser(user);
+		getCourseDetails(session);
 		
 		return session;
+	}
+	
+	/**
+	 * Get the current user's course details
+	 * @param session Current user's session
+	 */
+	private static void getCourseDetails(IsmisSession session) {
+		Document doc = Jsoup.parse(Page.requestGet(session, HTTP.VIEW_GRADES), HTTP.VIEW_GRADES);
+		
+		String courseTitleDetail = WordUtils.capitalizeFully(doc.getElementById("grdcourseDetails").getElementsByTag("p").get(0).html());
+		courseTitleDetail = courseTitleDetail.replaceAll("Of", "of").replaceAll("In", "in");
+		String courseTitleYear = doc.getElementById("grdcourseDetails").getElementsByTag("p").get(1).html();
+		
+		session.user().setCourseDetails(String.format("%s %s", courseTitleDetail, courseTitleYear));
 	}
 	
 	/**
