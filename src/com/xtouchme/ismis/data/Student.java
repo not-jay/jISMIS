@@ -18,7 +18,8 @@ public class Student {
 	private String					courseDetails;
 	
 	//Grades
-	private Map<String, Semester>	semesters;
+	private Map<String, Semester>	semesters,
+									prospectusList;
 	private float					generalWeightedAverage;
 	
 	/**
@@ -41,27 +42,6 @@ public class Student {
 		}
 	}
 
-	public void setCourseDetails(String courseDetails) {
-		this.courseDetails = courseDetails;
-	}
-	
-	public String courseDetails() {
-		return courseDetails;
-	}
-	
-	public Semester getSemester(String identifier) {
-		if(semesters == null) semesters = new Hashtable<>();
-		return semesters.get(identifier);
-	}
-	
-	public void setGWA(float gwa) {
-		this.generalWeightedAverage = gwa;
-	}
-	
-	public float gwa() {
-		return generalWeightedAverage;
-	}
-	
 	public String internalId() {
 		return internalId;
 	}
@@ -72,6 +52,10 @@ public class Student {
 	
 	public String name() {
 		return name;
+	}
+	
+	public String prospectus() {
+		return prospectus;
 	}
 	
 	public String yearLevelString() {
@@ -96,8 +80,48 @@ public class Student {
 		return yearLevel;
 	}
 	
-	public String prospectus() {
-		return prospectus;
+	public void setCourseDetails(String courseDetails) {
+		this.courseDetails = courseDetails;
+	}
+	
+	public String courseDetails() {
+		return courseDetails;
+	}
+	
+	public void addSemester(String identifier, Semester semester) {
+		if(semesters == null) semesters = new Hashtable<>();
+		semesters.put(identifier, semester);
+	}
+	
+	public Semester getSemester(String identifier) {
+		if(semesters == null) semesters = new Hashtable<>();
+		return semesters.get(identifier);
+	}
+	
+	public String[] semesterIdentifiers() {
+		if(semesters == null) return null;
+		return semesters.keySet().toArray(new String[] {});
+	}
+	
+	public void setProspectus(Map<String, Semester> prospectusList) {
+		this.prospectusList = prospectusList;
+	}
+	
+	public Semester getProspectusSemester(int year, int sem) {
+		if(prospectusList == null) return null;
+		return prospectusList.get(String.format("%d-%d", year, sem));
+	}
+	
+	public Map<String, Semester> prospectusList() {
+		return prospectusList;
+	}
+	
+	public void setGWA(float gwa) {
+		this.generalWeightedAverage = gwa;
+	}
+	
+	public float gwa() {
+		return generalWeightedAverage;
 	}
 	
 	@Override
