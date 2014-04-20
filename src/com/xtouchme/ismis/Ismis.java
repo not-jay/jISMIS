@@ -74,6 +74,16 @@ public class Ismis {
 	}
 	
 	/**
+	 * Checks a pages availability
+	 * @param pageURL URL of the page to test
+	 * @return true if page is available, false otherwise
+	 */
+	public static boolean checkConnection(IsmisSession session, String pageURL) {
+		Document docRef = Jsoup.parse(pageURL, pageURL);
+		return !docRef.title().isEmpty() && !docRef.body().equals(pageURL);
+	}
+	
+	/**
 	 * Checks ISMIS for new block list status, silently fails if it encounters any errors
 	 * @param session Session to use to check for blocklist
 	 */
