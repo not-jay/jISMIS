@@ -32,10 +32,10 @@ public class Semester {
 			year = null;
 		}
 		
-		if(caption.contains("First"))		term = Term.FIRST;
-		else if(caption.contains("Second"))	term = Term.SECOND;
-		else if(caption.contains("Summer"))	term = Term.SUMMER;
-		else 								term = null;
+		if(caption.contains("First") || caption.contains("1st"))		term = Term.FIRST;
+		else if(caption.contains("Second") || caption.contains("2nd"))	term = Term.SECOND;
+		else if(caption.contains("Summer"))								term = Term.SUMMER;
+		else 															term = null;
 		
 		year = caption.substring(caption.lastIndexOf(' ')).trim();
 		

@@ -1,7 +1,9 @@
 package com.xtouchme.ismis;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -88,6 +90,64 @@ public class Ismis {
 	public static boolean checkConnection(IsmisSession session, String pageURL) {
 		Document docRef = Jsoup.parse(pageURL, pageURL);
 		return !docRef.title().isEmpty() && !docRef.body().equals(pageURL);
+	}
+	
+	/**
+	 * Checks the view lacking subject grades
+	 * @param session Session to use to view the page
+	 */
+	public static void viewLackingSubjects(IsmisSession session) {
+		//Get remaining info from View Lacking Subjects
+		Document doc = Jsoup.parse(Page.requestGet(session, HTTP.LACKING_SUBJECTS), HTTP.LACKING_SUBJECTS);
+		Element grades = doc.getElementById("areaToPrint");
+		
+		Map<String, Semester> prospectus = new HashMap<>();
+		Map<String, String> preReq = new HashMap<>();
+		Map<String, String> coReq = new HashMap<>();
+		Semester current = null;
+		String id = "";
+		
+		for(Element e : grades.getElementsByTag("tbody").get(0).getElementsByTag("tr")) {
+			Elements data = e.getElementsByTag("td");
+			
+			if(e.text().contains("Year") && (e.text().contains("SEMESTER") || e.text().contains("SUMMER"))) {
+				String year = WordUtils.capitalizeFully(data.get(1).html().trim());
+				String sem = WordUtils.capitalizeFully(data.get(2).html().trim());
+				
+				if(year.startsWith("First")) year = "1";
+				else if(year.startsWith("Second")) year = "2";
+				else if(year.startsWith("Third")) year = "3";
+				else if(year.startsWith("Fourth")) year = "4";
+				else if(year.startsWith("Fifth")) year = "5";
+				else year = year.split(" ")[0];
+				
+				id = String.format("%s %s", sem, year);
+				current = new Semester(String.format("%s %s", sem, year));
+			} else if(e.text().contains("Total Units")) {
+				current.setTotalUnits(Integer.parseInt(data.get(3).html().trim()));
+				prospectus.put(id, current);
+			} else if(!e.hasText() || e.text().contains("#") || e.text().equals(" "))
+				continue;
+			else {
+				String index = data.get(0).html();
+				String code = data.get(1).html();
+				String title = data.get(2).html();
+				String units = data.get(3).html();
+				String pre = data.get(4).html();
+				String co = data.get(5).html();
+				String fg = data.get(6).html();
+				
+				if(!co.trim().isEmpty()) coReq.put(code, co);
+				if(!pre.trim().isEmpty()) preReq.put(code, pre);
+				
+				Subject subject = new Subject(code, title, units, "", fg);
+				subject.setIndex(index);
+				
+				current.addSubject(code, subject);
+			}
+		}
+		
+		session.user().setProspectus(prospectus);
 	}
 	
 	/**

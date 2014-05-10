@@ -107,9 +107,9 @@ public class Student {
 		this.prospectusList = prospectusList;
 	}
 	
-	public Semester getProspectusSemester(int year, int sem) {
+	public Semester getProspectusSemester(String year, String sem) {
 		if(prospectusList == null) return null;
-		return prospectusList.get(String.format("%d-%d", year, sem));
+		return prospectusList.get(String.format("%s %s", year, sem));
 	}
 	
 	public Map<String, Semester> prospectusList() {
