@@ -15,7 +15,9 @@ import org.jsoup.select.Elements;
 
 import com.xtouchme.ismis.data.Announcement;
 import com.xtouchme.ismis.data.BlockStatus;
+import com.xtouchme.ismis.data.Semester;
 import com.xtouchme.ismis.data.Student;
+import com.xtouchme.ismis.data.Subject;
 import com.xtouchme.utils.Lists;
 
 public class Ismis {
@@ -34,7 +36,7 @@ public class Ismis {
 		 * For exam permit, issue a GET with docId = 2
 		 **/
 		public static final String SCHEDULE = "http://ismis.usc.edu.ph/Student/EnrolledSubject/"; //TODO
-		public static final String VIEW_GRADES = "http://ismis.usc.edu.ph/Grades/ViewGrades/"; //TODO
+		public static final String VIEW_GRADES = "http://ismis.usc.edu.ph/Grades/ViewGrades/";
 		
 		public static final String ANNOUNCEMENT_DETAILS = "http://ismis.usc.edu.ph/Announcement/DisplayAnnouncement";
 	}
@@ -73,6 +75,11 @@ public class Ismis {
 		}
 	}
 	
+	//TODO List:
+	 /*
+	  * - Error checking
+	  */
+	
 	/**
 	 * Checks a pages availability
 	 * @param pageURL URL of the page to test
@@ -81,6 +88,53 @@ public class Ismis {
 	public static boolean checkConnection(IsmisSession session, String pageURL) {
 		Document docRef = Jsoup.parse(pageURL, pageURL);
 		return !docRef.title().isEmpty() && !docRef.body().equals(pageURL);
+	}
+	
+	/**
+	 * Checks the grades
+	 * @param session Session to use to view the grades
+	 */
+	public static void viewGrades(IsmisSession session) {
+		if(!session.isLoggedIn()) return;
+		
+		//Parse View Grades
+		Document doc = Jsoup.parse(Page.requestGet(session, HTTP.VIEW_GRADES), HTTP.VIEW_GRADES);
+		
+		Element error;
+		if(!((error = doc.getElementById("main")) != null && error.text().contains("settle your dues"))) {
+			Element grades = doc.getElementById("areaToPrint");
+			
+			for(Element e : grades.getElementsByClass("grdgradeTable")) {
+				String semId = WordUtils.capitalizeFully(e.getElementsByTag("caption").get(0).html());
+				if(semId.contains("Accredited Subjects")) continue;
+				
+				Semester sem = new Semester(semId);
+				
+				for(Element sub : e.getElementsByTag("tbody").get(0).getElementsByTag("tr")) {
+					Elements data = sub.getElementsByTag("td");
+					
+					String code = data.get(0).html();
+					String title = data.get(1).html();
+					String units = data.get(2).html();
+					String mg = data.get(3).html();
+					String fg = data.get(4).html();
+					
+					if(code.isEmpty()) sem.setGPA(Float.parseFloat(data.get(4).html()));
+					else sem.addSubject(code, new Subject(code, title, units, mg, fg));
+				}
+				session.user().addSemester(semId, sem);
+			}
+			
+			//Gets the GWA from View Grades
+			for(Element e : grades.getElementsByClass("grdSemGrades")) {
+				if(e.getElementsByTag("table").size() != 0) continue;
+				session.user().setGWA(Float.parseFloat(e.getElementsByTag("span").get(0).html()));
+			}
+			
+			for(String id : session.user().semesterIdentifiers()) {
+				System.out.println(session.user().getSemester(id));
+			}
+		}
 	}
 	
 	/**
