@@ -130,10 +130,6 @@ public class Ismis {
 				if(e.getElementsByTag("table").size() != 0) continue;
 				session.user().setGWA(Float.parseFloat(e.getElementsByTag("span").get(0).html()));
 			}
-			
-			for(String id : session.user().semesterIdentifiers()) {
-				System.out.println(session.user().getSemester(id));
-			}
 		}
 	}
 	
