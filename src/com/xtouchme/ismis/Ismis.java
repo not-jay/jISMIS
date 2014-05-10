@@ -283,6 +283,10 @@ public class Ismis {
 	private static void getCourseDetails(IsmisSession session) {
 		Document doc = Jsoup.parse(Page.requestGet(session, HTTP.VIEW_GRADES), HTTP.VIEW_GRADES);
 		
+		Element error;
+		if((error = doc.getElementById("main")) != null && error.text().contains("settle your dues"))
+			return;
+		
 		String courseTitleDetail = WordUtils.capitalizeFully(doc.getElementById("grdcourseDetails").getElementsByTag("p").get(0).html());
 		courseTitleDetail = courseTitleDetail.replaceAll("Of", "of").replaceAll("In", "in");
 		String courseTitleYear = doc.getElementById("grdcourseDetails").getElementsByTag("p").get(1).html();
