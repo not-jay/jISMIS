@@ -179,7 +179,13 @@ public class Ismis {
 					String mg = data.get(3).html();
 					String fg = data.get(4).html();
 					
-					if(code.isEmpty()) sem.setGPA(Float.parseFloat(data.get(4).html()));
+					if(code.isEmpty()) {
+						try {
+							sem.setGPA(Float.parseFloat(data.get(4).html()));
+						} catch (NumberFormatException nfe) {
+							sem.setGPA(0);
+						}
+					}
 					else sem.addSubject(code, new Subject(code, title, units, mg, fg));
 				}
 				session.user().addSemester(semId, sem);

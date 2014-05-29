@@ -7,6 +7,8 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.xtouchme.utils.Strings;
+
 public class Student {
 
 	//Student details
@@ -34,14 +36,24 @@ public class Student {
 		try {
 			this.internalId	= data.getString("Internal Id");
 			this.idNumber	= data.getString("Student Id");
-			this.name		= WordUtils.capitalizeFully(data.getString("Student Name"));
+			this.name		= WordUtils.capitalizeFully(Strings.normalizeHTMLString(data.getString("Student Name")));
 			this.prospectus	= data.getString("Student Prospectus");
-			this.yearLevel	= data.getInt("Year Level");
+			this.yearLevel	= Integer.parseInt(data.getString("Year Level"));
 		} catch(JSONException e) {
 			System.err.printf("Malformed data: %s%n", e.getMessage());
+		} catch(NumberFormatException nfe) {
+			this.yearLevel	= 0;
 		}
 	}
 
+	/**
+	 * Checks if the student contains valid data
+	 * @return true if data is valid, otherwise false
+	 */
+	public boolean validate() {
+		return (!idNumber.isEmpty() || !name.startsWith(","));
+	}
+	
 	public String internalId() {
 		return internalId;
 	}
@@ -107,9 +119,9 @@ public class Student {
 		this.prospectusList = prospectusList;
 	}
 	
-	public Semester getProspectusSemester(String year, String sem) {
+	public Semester getProspectusSemester(String sem, String year) {
 		if(prospectusList == null) return null;
-		return prospectusList.get(String.format("%s %s", year, sem));
+		return prospectusList.get(String.format("%s %s", sem, year));
 	}
 	
 	public Map<String, Semester> prospectusList() {
@@ -129,4 +141,11 @@ public class Student {
 		return String.format("[%s] %s %s %s", idNumber, name, prospectus, yearLevelString());
 	}
 	
+	private String parseName(String rawName) {
+		String name = WordUtils.capitalizeFully(rawName);
+		
+		
+		
+		return name;
+	}
 }
