@@ -20,7 +20,7 @@ public class Lists {
 		if(a == null || a.isEmpty()) return b;
 		if(b == null || b.isEmpty()) return a;
 		
-		List<T> diff = new ArrayList<>();
+		List<T> diff = new ArrayList<T>();
 		for(T element : a) {
 			if(!b.contains(element)) diff.add(element);
 		}
@@ -45,7 +45,7 @@ public class Lists {
 		if(a == null || a.isEmpty()) return b;
 		if(b == null || b.isEmpty()) return a;
 		
-		List<T> diff = new LinkedList<>();
+		List<T> diff = new LinkedList<T>();
 		for(T element : a) {
 			if(!b.contains(element)) diff.add(element);
 		}

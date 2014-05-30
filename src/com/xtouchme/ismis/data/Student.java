@@ -101,12 +101,12 @@ public class Student {
 	}
 	
 	public void addSemester(String identifier, Semester semester) {
-		if(semesters == null) semesters = new Hashtable<>();
+		if(semesters == null) semesters = new Hashtable<String, Semester>();
 		semesters.put(identifier, semester);
 	}
 	
 	public Semester getSemester(String identifier) {
-		if(semesters == null) semesters = new Hashtable<>();
+		if(semesters == null) semesters = new Hashtable<String, Semester>();
 		return semesters.get(identifier);
 	}
 	
@@ -141,11 +141,4 @@ public class Student {
 		return String.format("[%s] %s %s %s", idNumber, name, prospectus, yearLevelString());
 	}
 	
-	private String parseName(String rawName) {
-		String name = WordUtils.capitalizeFully(rawName);
-		
-		
-		
-		return name;
-	}
 }

@@ -5,7 +5,7 @@
 	<classpathentry kind="lib" path="libs/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="lib" path="libs/httpclient-4.2.5.jar"/>
 	<classpathentry kind="lib" path="libs/httpcore-4.2.4.jar"/>
-	<classpathentry kind="lib" path="libs/json-java.jar" sourcepath="/home/xtouchme/codes/Java/JSON-java/src"/>
+	<classpathentry kind="lib" path="libs/json-java.jar"/>
 	<classpathentry kind="lib" path="libs/jsoup-1.7.3.jar" sourcepath="libs/jsoup-1.7.3-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/jISMIS/libs/jsoup-1.7.3-javadoc.jar!/"/>

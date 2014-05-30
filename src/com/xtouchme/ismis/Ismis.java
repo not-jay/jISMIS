@@ -101,9 +101,9 @@ public class Ismis {
 		Document doc = Jsoup.parse(Page.requestGet(session, HTTP.LACKING_SUBJECTS), HTTP.LACKING_SUBJECTS);
 		Element grades = doc.getElementById("areaToPrint");
 		
-		Map<String, Semester> prospectus = new HashMap<>();
-		Map<String, String> preReq = new HashMap<>();
-		Map<String, String> coReq = new HashMap<>();
+		Map<String, Semester> prospectus = new HashMap<String, Semester>();
+		Map<String, String> preReq = new HashMap<String, String>();
+		Map<String, String> coReq = new HashMap<String, String>();
 		Semester current = null;
 		String id = "";
 		
@@ -213,7 +213,7 @@ public class Ismis {
 		else return;
 		if(total == 0 && json != null) return;
 		
-		List<BlockStatus> fetched = new ArrayList<>();
+		List<BlockStatus> fetched = new ArrayList<BlockStatus>();
 		JSONArray data = null;
 		
 		json = Page.requestJSONPost(session, JSON.BLOCK_LIST, "studentId="+session.user().internalId()+"&page=1&size="+total);
@@ -251,7 +251,7 @@ public class Ismis {
 		else return;
 		if(total == 0 && json != null) return;
 		
-		List<Announcement> fetched = new ArrayList<>();
+		List<Announcement> fetched = new ArrayList<Announcement>();
 		JSONArray data = null;
 		
 		json = Page.requestJSONPost(session, JSON.ANNOUNCEMENTS, "page=1&size="+total);

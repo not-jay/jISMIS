@@ -59,14 +59,14 @@ public class Semester {
 	}
 	
 	public void addSubject(String code, Subject s) {
-		if(subjects == null) subjects = new Hashtable<>();
+		if(subjects == null) subjects = new Hashtable<String, Subject>();
 		subjects.put(code, s);
 		totalUnits += s.units();
 		if(s.isPassed()) creditedUnits += s.units();
 	}
 	
 	public Subject getSubject(String code) {
-		if(subjects == null) subjects = new Hashtable<>();
+		if(subjects == null) subjects = new Hashtable<String, Subject>();
 		return subjects.get(code);
 	}
 	

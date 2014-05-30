@@ -31,32 +31,32 @@ public class IsmisSession {
 	}
 	
 	protected void addBlockStatus(List<BlockStatus> blockList) {
-		if(blockList == null) blockList = new ArrayList<>();
+		if(blockList == null) blockList = new ArrayList<BlockStatus>();
 		this.blockList.addAll(blockList);
 	}
 	
 	protected List<BlockStatus> blockList() {
-		if(blockList == null) blockList = new ArrayList<>();
+		if(blockList == null) blockList = new ArrayList<BlockStatus>();
 		return blockList;
 	}
 	
 	public BlockStatus[] getBlockList() {
-		if(blockList == null) blockList = new ArrayList<>();
+		if(blockList == null) blockList = new ArrayList<BlockStatus>();
 		return blockList.toArray(new BlockStatus[] {});
 	}
 	
 	protected void addAnnouncements(List<Announcement> announcements) {
-		if(announcements == null) announcements = new ArrayList<>();
+		if(announcements == null) announcements = new ArrayList<Announcement>();
 		this.announcements.addAll(announcements);
 	}
 	
 	protected List<Announcement> announcements() {
-		if(announcements == null) announcements = new ArrayList<>();
+		if(announcements == null) announcements = new ArrayList<Announcement>();
 		return announcements;
 	}
 	
 	public Announcement[] getAnnouncements() {
-		if(announcements == null) announcements = new ArrayList<>();
+		if(announcements == null) announcements = new ArrayList<Announcement>();
 		return announcements.toArray(new Announcement[] {});
 	}
 	
