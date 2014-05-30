@@ -106,11 +106,17 @@ public class Ismis {
 		Map<String, String> coReq = new HashMap<String, String>();
 		Semester current = null;
 		String id = "";
+		Subject.Status status = null;
 		
 		for(Element e : grades.getElementsByTag("tbody").get(0).getElementsByTag("tr")) {
 			Elements data = e.getElementsByTag("td");
 			
-			if(e.text().contains("Year") && (e.text().contains("SEMESTER") || e.text().contains("SUMMER"))) {
+			if(e.hasAttr("background-color")) {
+				String color = e.attr("background-color");
+				if(color.equalsIgnoreCase("white")) status = Subject.Status.PASSED;
+				else if(color.equalsIgnoreCase("lightpink")) status = Subject.Status.LACKING_PREREQUISITE;
+				else if (color.equalsIgnoreCase("lightgreen")) status = Subject.Status.ENROLLABLE;
+			} else if(e.text().contains("Year") && (e.text().contains("SEMESTER") || e.text().contains("SUMMER"))) {
 				String year = WordUtils.capitalizeFully(data.get(1).html().trim());
 				String sem = WordUtils.capitalizeFully(data.get(2).html().trim());
 				
@@ -142,6 +148,10 @@ public class Ismis {
 				
 				Subject subject = new Subject(code, title, units, "", fg);
 				subject.setIndex(index);
+				if(status != null) {
+					subject.setStatus(status);
+					status = null;
+				}
 				
 				current.addSubject(code, subject);
 			}
