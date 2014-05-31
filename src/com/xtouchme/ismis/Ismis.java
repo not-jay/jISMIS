@@ -333,12 +333,12 @@ public class Ismis {
 	 * Attempts to log-in to ISMIS
 	 * @param username
 	 * @param password
-	 * @return an IsmisSession object for a successful login, null otherwise.
+	 * @return an IsmisSession object. Check for errors with {@code IsmisSession#hasError()} before continuing
 	 */
 	public static IsmisSession login(String username, String password) {
 		IsmisSession session = new IsmisSession();
 		boolean result = loginAccount(session, username, password);
-		if(!result) return null;
+		if(!result) return session;
 		
 		Student user = getStudentDetails(session);
 		if(user == null) return null;
@@ -398,6 +398,7 @@ public class Ismis {
 	
 	/**
 	 * Logs a session in
+	 * If an error occurs set errorFlag in session appropriately
 	 * @param session Session to log-in
 	 * @param username Student ID Number
 	 * @param password Password
@@ -411,6 +412,12 @@ public class Ismis {
 		Document doc = Jsoup.parse(Page.requestPost(session, HTTP.HOME, data), HTTP.HOME);
 		Element redirect = doc.getElementsByTag("a").get(0);
 		
-		return HTTP.STUDENT_HOME.endsWith(redirect.attr("href")+"/");
+		if(HTTP.STUDENT_HOME.endsWith(redirect.attr("href")+"/")) return true;
+		else {
+			if(redirect.attr("href").equals("/")) session.setError(IsmisSession.Error.INVALID_CREDENTIALS);
+			else session.setError(IsmisSession.Error.UNHANDLED_RESPONSE);
+			
+			return false;
+		}
 	}
 }

@@ -14,13 +14,13 @@ public class IsmisSession {
 	private HttpRequest			request;
 	private List<Announcement>	announcements;
 	private List<BlockStatus>	blockList;
+	private Error				error;
+	
 	
 	/** Instantiates a session with only an HttpRequest object */
 	protected IsmisSession() {
+		logout();
 		this.request	= new HttpRequest();
-		currentUser		= null;
-		announcements	= null;
-		blockList		= null;
 	}
 	
 	protected void logout() {
@@ -28,6 +28,7 @@ public class IsmisSession {
 		currentUser		= null;
 		announcements	= null;
 		blockList		= null;
+		error			= null;
 	}
 	
 	protected void addBlockStatus(List<BlockStatus> blockList) {
@@ -72,6 +73,18 @@ public class IsmisSession {
 		return currentUser;
 	}
 	
+	public void setError(Error error) {
+		this.error = error;
+	}
+	
+	public boolean hasError() {
+		return error != null;
+	}
+	
+	public Error error() {
+		return error;
+	}
+	
 	protected String sendJSONPost(String url, String data) {
 		return request.sendJSONPost(url, data);
 	}
@@ -83,4 +96,20 @@ public class IsmisSession {
 	protected String sendGet(String url) {
 		return request.sendGet(url);
 	}
+	
+	public static class Error {
+		
+		public static final Error	INVALID_CREDENTIALS = new Error("The username and/or password you entered is incorrect. Please try again.");
+		public static final Error	UNHANDLED_RESPONSE	= new Error("Unhandled Response! Assuming Login has failed.");
+		
+		private String message;
+		private Error(String message) {
+			this.message = message;
+		}
+		@Override
+		public String toString() {
+			return message;
+		}
+	}
+	
 }
