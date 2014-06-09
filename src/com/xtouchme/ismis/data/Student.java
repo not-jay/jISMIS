@@ -121,7 +121,7 @@ public class Student {
 	
 	public Semester getProspectusSemester(String sem, String year) {
 		if(prospectusList == null) return null;
-		return prospectusList.get(String.format("%s %s", sem, year));
+		return prospectusList.get(String.format("%s~!%s", sem, year));
 	}
 	
 	public Map<String, Semester> prospectusList() {

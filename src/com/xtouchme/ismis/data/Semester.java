@@ -96,8 +96,10 @@ public class Semester {
 	
 	public String toString() {
 		String sem = String.format("%s %s%n", term(), year);
-		for(Subject s : subjects()) {
-			sem += String.format("  %s%n", s);
+		if(subjects != null) {
+			for(Subject s : subjects()) {
+				sem += String.format("  %s%n", s);
+			}
 		}
 		sem += String.format("GPA: %.2f", gradePointAverage);
 		return sem;
