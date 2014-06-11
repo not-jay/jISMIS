@@ -39,8 +39,8 @@ public class Ismis {
 		 **/
 		public static final String SCHEDULE = "http://ismis.usc.edu.ph/Student/EnrolledSubject/"; //TODO
 		public static final String VIEW_GRADES = "http://ismis.usc.edu.ph/Grades/ViewGrades/";
-		
 		public static final String ANNOUNCEMENT_DETAILS = "http://ismis.usc.edu.ph/Announcement/DisplayAnnouncement";
+		public static final String REGULAR_ENROLLMENT = "http://ismis.usc.edu.ph/StudentEnrollment/Index"; //Hard Mode
 	}
 	/** JSON Object URLs */
 	public class JSON {
