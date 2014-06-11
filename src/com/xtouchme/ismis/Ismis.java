@@ -127,7 +127,7 @@ public class Ismis {
 				else if(year.startsWith("Fifth")) year = "5";
 				else year = year.split(" ")[0];
 				
-				id = String.format("%s %s", sem, year);
+				id = String.format("%s~!%s", sem, year);
 				current = new Semester(String.format("%s %s", sem, year));
 			} else if(e.text().contains("Total Units")) {
 				current.setTotalUnits(Integer.parseInt(data.get(3).html().trim()));
